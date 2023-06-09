@@ -1,0 +1,6 @@
+fastapi >= latest
+python-multipart >= latest
+uvicorn >= latest
+python-jose[cryptography] >= latest
+passlib[bcrypt] >= latest
+fastapi-cache2 >= latest
