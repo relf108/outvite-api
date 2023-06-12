@@ -15,7 +15,7 @@ class Token(BaseModel):
 
 
 class TokenData(BaseModel):
-    username: str | None = None
+    email: str | None = None
 
 
 def create_access_token(data: dict, expires_delta: timedelta | None = None):

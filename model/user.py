@@ -1,45 +1,27 @@
-import secrets
+from datetime import datetime
 from typing import Annotated
 
+from beanie import Document, Indexed
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
 from passlib.context import CryptContext
-from pydantic import BaseModel
 
-from model.auth_token import TokenData, SECRET_KEY, ALGORITHM
-
-fake_users_db = {
-    "johndoe": {
-        "username": "johndoe",
-        "full_name": "John Doe",
-        "email": "johndoe@example.com",
-        "hashed_password": "$2b$12$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36WQoeG6Lruj3vjPGga31lW",
-        "disabled": False,
-    }
-}
+from model.auth_token import ALGORITHM, SECRET_KEY, TokenData
 
 
-class User(BaseModel):
-    username: str
-    email: str | None = None
-    full_name: str | None = None
-    disabled: bool | None = None
-
-
-class UserInDB(User):
-    hashed_password: str
+class User(Document):
+    email: Indexed(str)
+    first_name: str
+    last_name: str
+    DOB: datetime
+    phone_number: str
+    hashed_password: str | None = None
 
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
-
-def get_user(db, username: str):
-    if username in db:
-        user_dict = db[username]
-        return UserInDB(**user_dict)
 
 
 def verify_password(plain_password, hashed_password):
@@ -58,13 +40,13 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]):
     )
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        username: str = payload.get("sub")
-        if username is None:
+        email: str = payload.get("sub")
+        if email is None:
             raise credentials_exception
-        token_data = TokenData(username=username)
+        token_data = TokenData(email=email)
     except JWTError:
         raise credentials_exception
-    user = get_user(fake_users_db, username=token_data.username)
+    user = await User.find_one(User.email == token_data.email)
     if user is None:
         raise credentials_exception
     return user
@@ -78,8 +60,8 @@ async def get_current_active_user(
     return current_user
 
 
-def authenticate_user(fake_db, username: str, password: str):
-    user = get_user(fake_db, username)
+async def authenticate_user(Document, email: str, password: str):
+    user = await User.find_one(User.email == email)
     if not user:
         return False
     if not verify_password(password, user.hashed_password):
