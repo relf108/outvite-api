@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from core import auth
+from model import auth_token
 import uvicorn
 from fastapi import FastAPI
 from starlette.requests import Request
@@ -13,7 +13,7 @@ from redis import asyncio as aioredis
 
 app = FastAPI()
 
-app.include_router(auth.router)
+app.include_router(auth_token.router)
 
 @cache()
 async def get_cache():
