@@ -6,6 +6,7 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
 from passlib.context import CryptContext
+from core.web import sensitive_fields
 
 from model.auth_token import ALGORITHM, SECRET_KEY, TokenData
 
@@ -17,6 +18,11 @@ class User(Document):
     DOB: datetime
     phone_number: str
     hashed_password: str | None = None
+
+    async def register(self):
+        self.hashed_password = get_password_hash(self.hashed_password)
+        await self.insert()
+        return self
 
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
@@ -30,7 +36,6 @@ def verify_password(plain_password, hashed_password):
 
 def get_password_hash(password):
     return pwd_context.hash(password)
-
 
 async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]):
     credentials_exception = HTTPException(
@@ -52,15 +57,7 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]):
     return user
 
 
-async def get_current_active_user(
-    current_user: Annotated[User, Depends(get_current_user)]
-):
-    if current_user.disabled:
-        raise HTTPException(status_code=400, detail="Inactive user")
-    return current_user
-
-
-async def authenticate_user(Document, email: str, password: str):
+async def authenticate_user(email: str, password: str):
     user = await User.find_one(User.email == email)
     if not user:
         return False
