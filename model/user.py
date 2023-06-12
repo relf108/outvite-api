@@ -1,16 +1,13 @@
 import secrets
 from typing import Annotated
+
 from fastapi import Depends, HTTPException, status
-from pydantic import BaseModel
-from passlib.context import CryptContext
 from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
+from passlib.context import CryptContext
+from pydantic import BaseModel
 
-from model.auth_token import TokenData
-
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
-SECRET_KEY = secrets.token_hex(32)
+from model.auth_token import TokenData, SECRET_KEY, ALGORITHM
 
 fake_users_db = {
     "johndoe": {

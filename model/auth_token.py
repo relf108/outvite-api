@@ -1,7 +1,12 @@
-from pydantic import BaseModel
+import secrets
 from datetime import datetime, timedelta
+
 from jose import jwt
-from model.user import ALGORITHM, SECRET_KEY
+from pydantic import BaseModel
+
+ALGORITHM = "HS256"
+ACCESS_TOKEN_EXPIRE_MINUTES = 30
+SECRET_KEY = secrets.token_hex(32)
 
 
 class Token(BaseModel):

@@ -1,7 +1,8 @@
 from typing import Annotated
-from fastapi import APIRouter, Depends
-from model.user import User, get_current_active_user
 
+from fastapi import APIRouter, Depends
+
+from model.user import User, get_current_active_user
 
 router = APIRouter()
 

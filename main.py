@@ -1,9 +1,7 @@
 from fastapi import FastAPI
-from model import auth_token
+from handlers import auth_token, user
 import uvicorn
 from fastapi import FastAPI
-from starlette.requests import Request
-from starlette.responses import Response
 
 from fastapi_cache import FastAPICache
 from fastapi_cache.backends.redis import RedisBackend
@@ -14,6 +12,8 @@ from redis import asyncio as aioredis
 app = FastAPI()
 
 app.include_router(auth_token.router)
+app.include_router(user.router)
+
 
 @cache()
 async def get_cache():
@@ -28,7 +28,9 @@ async def index():
 
 @app.on_event("startup")
 async def startup():
-    redis = aioredis.from_url("redis://localhost", encoding="utf8", decode_responses=True)
+    redis = aioredis.from_url(
+        "redis://localhost", encoding="utf8", decode_responses=True
+    )
     FastAPICache.init(RedisBackend(redis), prefix="fastapi-cache")
 
 
