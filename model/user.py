@@ -7,6 +7,7 @@ from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 
+from core.web import sensitive_fields
 from model.auth_token import ALGORITHM, SECRET_KEY, TokenData
 
 
@@ -20,8 +21,11 @@ class User(Document):
 
     async def register(self):
         self.hashed_password = get_password_hash(self.hashed_password)
-        await self.insert()
-        return self
+        return await self.insert()
+
+    @sensitive_fields(["hashed_password"])
+    async def find_one_sensitive(*args, **kwargs):
+        return await User.find_one(*args, **kwargs)
 
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")

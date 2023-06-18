@@ -6,12 +6,13 @@ from fastapi_cache.decorator import cache
 from redis import asyncio as aioredis
 
 from core.db import init_db
-from handlers import auth_token, user
+from handlers import auth_token, user, event
 
 app = FastAPI()
 
 app.include_router(auth_token.router)
 app.include_router(user.router)
+app.include_router(event.router)
 
 
 @cache()

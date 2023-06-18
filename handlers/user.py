@@ -23,12 +23,12 @@ async def read_users_me(current_user: Annotated[User, Depends(get_user)]):
 
 @router.get("/users/me/events/", response_model=list[Event])
 async def get_user_events(current_user: Annotated[User, Depends(get_user)]):
-    return await Event.find_all(Event.host == current_user)
+    return await Event.find_many(Event.host == current_user).to_list()
 
 
 @router.get("/users/me/events/attending", response_model=list[Event])
 async def get_user_events_attending(current_user: Annotated[User, Depends(get_user)]):
-    return await Event.find_all(current_user in Event.attendees)
+    return await Event.find_many(current_user in Event.attendees).to_list()
 
 
 @router.post("users/me/events", response_model=Event)
