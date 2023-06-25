@@ -2,6 +2,7 @@ from datetime import datetime
 from typing import Annotated
 
 from beanie import Document, Indexed
+from beanie.odm.operators.find.array import ElemMatch
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt

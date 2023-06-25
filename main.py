@@ -29,18 +29,6 @@ async def index():
 @app.on_event("startup")
 async def start_db():
     await init_db()
-    from datetime import datetime
-
-    from model.user import User
-
-    await User(
-        email="tristan.sutton@gmail.com",
-        first_name="Tristan",
-        last_name="Sutton",
-        DOB=datetime.now(),
-        phone_number="0424415350",
-    ).insert()
-
 
 @app.on_event("startup")
 async def startup():

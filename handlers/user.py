@@ -3,8 +3,9 @@ from typing import Annotated
 from fastapi import APIRouter, Depends
 
 from core.web import sensitive_fields
-from model.event import Event
+from model.event import Event, EventJSON
 from model.user import User, get_user
+from beanie.odm.operators.find.array import ElemMatch
 
 router = APIRouter()
 
@@ -21,19 +22,17 @@ async def read_users_me(current_user: Annotated[User, Depends(get_user)]):
     return current_user
 
 
-@router.get("/users/me/events/", response_model=list[Event])
+@router.get("/users/me/events/hosting", response_model=list[EventJSON])
 async def get_user_events(current_user: Annotated[User, Depends(get_user)]):
-    return await Event.find_many(Event.host == current_user).to_list()
+    hosting_db: list[Event] = await Event.find_many(
+        Event.host == current_user
+    ).to_list()
+    return [EventJSON.from_event(rec) for rec in hosting_db]
 
 
-@router.get("/users/me/events/attending", response_model=list[Event])
+@router.get("/users/me/events/attending", response_model=list[EventJSON])
 async def get_user_events_attending(current_user: Annotated[User, Depends(get_user)]):
-    return await Event.find_many(current_user in Event.attendees).to_list()
-
-
-@router.post("users/me/events", response_model=Event)
-async def create_user_event(
-    current_user: Annotated[User, Depends(get_user)], event: Event
-):
-    event.host = current_user
-    return await event.create_event()
+    attending_db: list[Event] = await Event.find_many(
+        ElemMatch(Event.attendees, current_user)
+    ).to_list()
+    return [EventJSON.from_event(rec) for rec in attending_db]
