@@ -6,7 +6,7 @@ from fastapi_cache.decorator import cache
 from redis import asyncio as aioredis
 
 from core.db import init_db
-from handlers import auth_token, user, event
+from handlers import auth_token, event, user
 
 app = FastAPI()
 
@@ -29,6 +29,7 @@ async def index():
 @app.on_event("startup")
 async def start_db():
     await init_db()
+
 
 @app.on_event("startup")
 async def startup():

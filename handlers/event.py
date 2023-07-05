@@ -1,26 +1,28 @@
 from typing import Annotated
 
-from beanie import PydanticObjectId
 from fastapi import APIRouter, Depends, HTTPException
-from model.event import Event, EventJSON
+from model.event import Event
 from model.user import User, get_user
 
 router = APIRouter()
 
 
-@router.post("/events", response_model=EventJSON)
-async def create_event(event: EventJSON, host: Annotated[User, Depends(get_user)]):
-    db_event = await event.as_event(host)
-    return await db_event.create_event()
+@router.post("/events", response_model=Event)
+async def create_event(event: Event, host: Annotated[User, Depends(get_user)]):
+    if (await event.host.fetch()).id != host.id:
+        raise HTTPException(
+            status_code=403,
+            detail="You are not authorized to create an event on another user's behalf",
+        )
+    return await event.insert()
 
 
-@router.put("/events", response_model=EventJSON)
-async def update_event(event: EventJSON, host: Annotated[User, Depends(get_user)]):
-    db_event = await Event.get(event.id)
-    if not db_event:
-        raise HTTPException(status_code=404, detail="Event not found")
-    if db_event.host != host:
+@router.put("/events", response_model=Event)
+async def update_event(event: Event, host: Annotated[User, Depends(get_user)]):
+    if (await Event.find_one(Event.id == event.id)) is None:
+        raise HTTPException(status_code=400, detail="No existing event with that ID")
+    if (await event.host.fetch()).id != host.id:
         raise HTTPException(
             status_code=403, detail="You are not the host of this event"
         )
-    return await db_event.update_event(event.as_event(host))
+    return await event.save()
