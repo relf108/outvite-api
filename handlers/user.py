@@ -1,7 +1,8 @@
 from typing import Annotated
 
-from core.web import sensitive_fields
 from fastapi import APIRouter, Depends
+
+from core.web import sensitive_fields
 from model.event import Event
 from model.user import User, get_user
 

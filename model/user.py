@@ -2,13 +2,11 @@ from datetime import datetime
 from typing import Annotated
 
 from beanie import Document, Indexed
-from beanie.odm.operators.find.array import ElemMatch
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 
-from core.web import sensitive_fields
 from model.auth_token import ALGORITHM, SECRET_KEY, TokenData
 
 
@@ -23,10 +21,6 @@ class User(Document):
     async def register(self):
         self.hashed_password = get_password_hash(self.hashed_password)
         return await self.insert()
-
-    @sensitive_fields(["hashed_password"])
-    async def find_one_sensitive(*args, **kwargs):
-        return await User.find_one(*args, **kwargs)
 
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")

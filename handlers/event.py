@@ -1,6 +1,7 @@
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException
+
 from model.event import Event
 from model.user import User, get_user
 
