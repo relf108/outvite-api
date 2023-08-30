@@ -5,14 +5,12 @@ from fastapi_cache.backends.redis import RedisBackend
 from fastapi_cache.decorator import cache
 from redis import asyncio as aioredis
 
-from core.db import init_db
-from handlers import auth_token, event, user
+from handlers import auth_token, user
 
 app = FastAPI()
 
 app.include_router(auth_token.router)
 app.include_router(user.router)
-app.include_router(event.router)
 
 
 @cache()
@@ -26,9 +24,9 @@ async def index():
     return dict(hello="world")
 
 
-@app.on_event("startup")
-async def start_db():
-    await init_db()
+# @app.on_event("startup")
+# async def start_db():
+#    await init_db()
 
 
 @app.on_event("startup")
