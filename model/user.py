@@ -1,13 +1,7 @@
 from datetime import datetime
 from typing import Annotated, Optional
-from sqlalchemy import Integer, String, Column, DateTime, create_engine
-from sqlalchemy.orm import (
-    relationship,
-    DeclarativeBase,
-    Mapped,
-    MappedColumn,
-    mapped_column,
-)
+from sqlalchemy import Integer, String, DateTime
+from sqlalchemy.orm import Mapped, mapped_column
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
@@ -18,7 +12,7 @@ from model.auth_token import ALGORITHM, SECRET_KEY, TokenData
 from pydantic import BaseModel
 
 
-class User(Base):
+class UserDao(Base):
     __tablename__ = "users"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
@@ -38,7 +32,7 @@ class UserModel(BaseModel):
 
 
 class UserObject(object):
-    def to_response_model(self, user: User) -> UserModel:
+    def to_response_model(self, user: UserDao) -> UserModel:
         return UserModel(
             email=user.email,
             first_name=user.first_name,
@@ -46,45 +40,34 @@ class UserObject(object):
             dob=user.dob,
         )
 
-    def insert(self, user: User):
+    def insert(self, user: UserDao):
         with db.get_session() as session:
             session.add(user)
             session.commit()
 
-    def update(self, user: User):
+    def update(self, user: UserDao):
         with db.get_session() as session:
             session.merge(user)
             session.commit()
 
-    def delete(self, user: User):
+    def delete(self, user: UserDao):
         with db.get_session() as session:
             session.delete(user)
             session.commit()
 
-    def get(self, user: UserModel) -> list[User]:
+    def get(self, user: UserModel) -> list[UserDao]:
         filters: list = []
         for key, value in user.dict().items():
             if value:
-                filters.append(getattr(User, key) == value)
-
-        # if email:
-        #    filters.append(User.email == email)
-        # if first_name:
-        #    filters.append(User.first_name == first_name)
-        # if last_name:
-        #    filters.append(User.last_name == last_name)
-        # if dob:
-        #    filters.append(User.dob == dob)
-        # if hashed_password:
-        #    filters.append(User.hashed_password == hashed_password)
-
+                filters.append(getattr(UserDao, key) == value)
         with db.get_session() as session:
-            return session.query(User).filter(*filters).all()
+            return session.query(UserDao).filter(*filters).all()
 
-    def register(self, user: User):
-        user.hashed_password = get_password_hash(user.hashed_password)
-        UserObject().insert(user)
-        return self.to_response_model(db.get_session().merge(user))
+    def register(self, user: UserModel):
+        db_user = UserDao(**user.dict())
+        db_user.hashed_password = get_password_hash(user.hashed_password)
+        UserObject().insert(db_user)
+        return self.to_response_model(db.get_session().merge(db_user))
 
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
@@ -92,7 +75,7 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
-def get_user(token: Annotated[str, Depends(oauth2_scheme)]):
+def get_auth_user(token: Annotated[str, Depends(oauth2_scheme)]):
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
@@ -106,7 +89,7 @@ def get_user(token: Annotated[str, Depends(oauth2_scheme)]):
         token_data = TokenData(email=email)
     except JWTError:
         raise credentials_exception
-    user = UserObject().get(UserModel(email=token_data.email))
+    user = UserObject().get(UserModel(email=token_data.email or ""))
     if len(user) == 0:
         raise credentials_exception
     return UserObject().to_response_model(user[0])

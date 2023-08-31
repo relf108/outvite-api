@@ -10,7 +10,7 @@ from model.user import authenticate_user
 router = APIRouter()
 
 
-@router.post("/token", response_model=Token)
+@router.post("/login", response_model=Token)
 async def login_for_access_token(
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()]
 ):
