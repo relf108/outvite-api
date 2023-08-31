@@ -24,11 +24,6 @@ async def index():
     return dict(hello="world")
 
 
-# @app.on_event("startup")
-# async def start_db():
-#    await init_db()
-
-
 @app.on_event("startup")
 async def startup():
     redis = aioredis.from_url(
